@@ -32,6 +32,28 @@ namespace SendMessageToOa
             return resultdt;
         }
 
+        /// <summary>
+        /// 根据userid(用户ID）获取对应的用户名称信息
+        /// </summary>
+        /// <param name="userid"></param>
+        /// <returns></returns>
+        public DataTable SearchUserRecord(string userid)
+        {
+            var dt = UseSqlSearchIntoDt(sqlList.SearchUserRecord(userid));
+            return dt;
+        }
+
+        /// <summary>
+        /// 根据sourceid,获取相关UserName的值
+        /// </summary>
+        /// <param name="sourceid"></param>
+        /// <returns></returns>
+        public DataTable SearchRecord(string sourceid)
+        {
+            var dt = UseSqlSearchIntoDt(sqlList.SearchRecord(sourceid));
+            return dt;
+        }
+
 
 
     }
