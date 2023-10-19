@@ -21,7 +21,7 @@ namespace SendMessageToOa
                     //待办任务ID
                     case 0:
                         dc.ColumnName = "Sourceid";
-                        dc.DataType = Type.GetType("System.Int32");
+                        dc.DataType = Type.GetType("System.String");
                         break;
                     //用户ID
                     case 1:
@@ -36,7 +36,7 @@ namespace SendMessageToOa
                     //插入时间
                     case 3:
                         dc.ColumnName = "InsertDt";
-                        dc.DataType = Type.GetType("System.Int32");
+                        dc.DataType = Type.GetType("System.String");
                         break;
                 }
                 dt.Columns.Add(dc);
