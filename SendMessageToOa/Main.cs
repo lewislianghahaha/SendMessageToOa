@@ -22,7 +22,6 @@ namespace SendMessageToOa
             //变量定义
             var apiurl = "";
             var requestData = new object();
-            var loopid = 0;
             //定义返回对像(初始化)
             MobileResponse responseData = null;
 
@@ -95,12 +94,12 @@ namespace SendMessageToOa
                 var response = SendApi(apiurl, requestData);
 
                 //处理API响应
-                if (response.IsSuccessStatusCode)
-                {
-                    // 根据实际情况解析API响应,构建MobileResponse对象并返回  
-                    var responseContect = response.Content.ReadAsStringAsync().Result;
-                    responseData = JsonConvert.DeserializeObject<MobileResponse>(responseContect);
-                }
+                //if (response.IsSuccessStatusCode)
+                //{
+                // 根据实际情况解析API响应,构建MobileResponse对象并返回  
+                var responseContect = response.Content.ReadAsStringAsync().Result;
+                responseData = JsonConvert.DeserializeObject<MobileResponse>(responseContect);
+                //}
             }
             //todo:执行调用“待办”转“已办”泛微接口 done
             else if(message.Status.ToString() == "2")
@@ -118,10 +117,8 @@ namespace SendMessageToOa
 
                 if (searchdt.Rows.Count > 0)
                 {
-                    foreach (DataRow rows in searchdt.Rows)
+                    for (var i = 0; i < searchdt.Rows.Count; i++)  //foreach (DataRow rows in searchdt.Rows)
                     {
-
-
                         #region 参数说明:(共6个)
                         /*
                             参数说明:(共6个)
@@ -141,31 +138,26 @@ namespace SendMessageToOa
                             requestname = message.Title,
                             workflowname = message.Title,
                             nodename = message.Title + "已办",
-                            receiver = Convert.ToString(rows[0])    //接收者 message.Users 为消息接收者的金碟云星空用户ID
+                            receiver = Convert.ToString(searchdt.Rows[0][0])    //接收者 message.Users 为消息接收者的金碟云星空用户ID
                         };
 
                         var response = SendApi(apiurl, requestData);
 
-
+                        //todo:作为每次循环-起始整合语句
+                        responseContect += "{\"姓名\":" + "\"" + Convert.ToString(searchdt.Rows[i][0]) + "\"" + ",\"返回状态\"" + ":" + $"{response.IsSuccessStatusCode}" + "},";
 
                         //处理API响应--循环收集成功与失败的信息
-                        if (response.IsSuccessStatusCode)
-                        {
-                            // 根据实际情况解析API响应,构建MobileResponse对象并返回  
-                            responseContect += response.Content.ReadAsStringAsync().Result;
-
-                        }
-                        //TODO:当response返回失败,结合返回信息
-                        else
-                        {
-                            
-                        }
-
-                        loopid++;
+                        //根据实际情况解析API响应,构建MobileResponse对象并返回  
+                        //todo:注:检测若循环不为最后一行时,将","号添加,反之,不用
+                        responseContect += i == searchdt.Rows.Count - 1
+                            ? response.Content.ReadAsStringAsync().Result
+                            : response.Content.ReadAsStringAsync().Result + ",";
                     }
 
                     //todo:结束时添加]
                     responseContect += "]";
+
+                    var a21 = responseContect;
 
                     responseData = JsonConvert.DeserializeObject<MobileResponse>(responseContect);
                 }
