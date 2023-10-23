@@ -53,8 +53,5 @@ namespace SendMessageToOa
             var dt = UseSqlSearchIntoDt(sqlList.SearchRecord(sourceid));
             return dt;
         }
-
-
-
     }
 }

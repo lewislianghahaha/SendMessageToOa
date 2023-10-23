@@ -14,7 +14,7 @@ namespace SendMessageToOa
         /// <param name="dt">包含数据的临时表</param>
         public void ImportDtToDb(string tableName, DataTable dt)
         {
-            var sqlcon = connDb.GetK3CloudConn();
+             var sqlcon = connDb.GetK3CloudConn();
              sqlcon.Open(); //若返回一个SqlConnection的话,必须要显式打开 
             //注:1)要插入的DataTable内的字段数据类型必须要与数据库内的一致;并且要按数据表内的字段顺序 2)SqlBulkCopy类只提供将数据写入到数据库内
             using (var sqlBulkCopy = new SqlBulkCopy(sqlcon))

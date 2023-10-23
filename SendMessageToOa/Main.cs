@@ -22,6 +22,7 @@ namespace SendMessageToOa
             //变量定义
             var apiurl = "";
             var requestData = new object();
+
             //定义返回对像(初始化)
             MobileResponse responseData = null;
 
@@ -35,6 +36,14 @@ namespace SendMessageToOa
             //todo:执行调用生成“待办”泛微接口 TODO
             if (message.Status.ToString() == "1")
             {
+                var responseContect = "[";
+
+                var b3a = message.Users[0];
+
+                //todo:根据userid获取到对应的username
+                var userdt = searchDt.SearchUserRecord(message.Users[0]).Copy();
+                var username = userdt.Rows.Count == 0 ? "" : Convert.ToString(userdt.Rows[0][0]);
+
                 // 构造API请求参数  
                 //泛微（ReceiveRequestInfoByJson）接口-->接收流程数据(Json格式):  可接收待办、已办、归档的流程数据--(no need)
                 //泛微（ReceiveTodoRequestByJson）接口-->接收待办数据(Json格式)： 只接收待办流程数据
@@ -74,7 +83,7 @@ namespace SendMessageToOa
                     appurl = $"/interface/K3CloudEntranceV5.jsp",
                     creator = "梁嘉杰",   //ctx.UserName 创建者名称
                     createdatetime = DateTime.Now.ToString(),
-                    receiver = "梁嘉杰",  //message.Users 为消息接收者的金碟云星空用户ID
+                    receiver = "梁嘉杰",  //username==> message.Users 为消息接收者的金碟云星空用户ID
                     receivedatetime = DateTime.Now.ToString(),
                     //isremark = "0",
                     //viewtype = "0",
@@ -86,20 +95,21 @@ namespace SendMessageToOa
                 };
 
                 //todo:整理相关信息并插入至T_BD_InsertSourceid表内 message.Users
-                var b3a = message.Users[0];
-
-                InsertDtToK3Table(message.SourceId,message.Users[0],ctx.UserName,message.Title);
+                InsertDtToK3Table(message.SourceId, message.Users[0],username, ctx.UserName,message.Title);
 
                 //todo:调用泛微API
                 var response = SendApi(apiurl, requestData);
 
                 //处理API响应
-                //if (response.IsSuccessStatusCode)
-                //{
                 // 根据实际情况解析API响应,构建MobileResponse对象并返回  
-                var responseContect = response.Content.ReadAsStringAsync().Result;
+                responseContect += "{\"姓名\":" + "\"" + username + "\"" + ",\"返回状态\"" + ":" + $"{response.IsSuccessStatusCode}" + "},";
+                responseContect += response.Content.ReadAsStringAsync().Result;
+                //结束时添加]
+                responseContect += "]";
+
+                var a21 = responseContect;
+
                 responseData = JsonConvert.DeserializeObject<MobileResponse>(responseContect);
-                //}
             }
             //todo:执行调用“待办”转“已办”泛微接口 done
             else if(message.Status.ToString() == "2")
@@ -111,8 +121,7 @@ namespace SendMessageToOa
 
                 //泛微（ProcessDoneRequestByJson）接口-->作用:将待办转为已办
                 apiurl = "http://172.16.4.29:8888/rest/ofs/ProcessDoneRequestByJson";
-
-                //todo:根据message.SourceId获取T_BD_InsertSourceid表中对应的UserName(接收者名称),并作为接口的receiver(接收者)参数,循环调用泛微接口
+                //根据message.SourceId获取T_BD_InsertSourceid表中对应的UserName(接收者名称),并作为接口的receiver(接收者)参数,循环调用泛微接口
                 var searchdt = SearchReceiveUserName(message.SourceId);
 
                 if (searchdt.Rows.Count > 0)
@@ -122,12 +131,12 @@ namespace SendMessageToOa
                         #region 参数说明:(共6个)
                         /*
                             参数说明:(共6个)
-                             syscode:异构系统标识
-                             flowid:流程实例id(自定义)
-                             requestname:标题(自定义)
-                             workflowname：流程类型名称(自定义)
-                             nodename:步骤名称（节点名称）
-                             receiver:接收人(K3用户名称)
+                            syscode:异构系统标识
+                            flowid:流程实例id(自定义)
+                            requestname:标题(自定义)
+                            workflowname：流程类型名称(自定义)
+                            nodename:步骤名称（节点名称）
+                            receiver:接收人(K3用户名称)
                         */
                         #endregion
 
@@ -200,19 +209,13 @@ namespace SendMessageToOa
         /// <summary>
         /// 将相关记录插入至临时表,并最后将相关记录插入至T_BD_InsertSourceid表内
         /// </summary>
-        /// <param name="sourceid"></param>
-        /// <param name="userid"></param>
-        /// <param name="createname"></param>
-        /// <param name="projecttitle"></param>
-        private void InsertDtToK3Table(string sourceid,string userid,string createname,string projecttitle)
+        /// <param name="sourceid">待办任务ID</param>
+        /// <param name="userid">接收者ID</param>
+        /// <param name="username">接收者名称</param>
+        /// <param name="createname">创建人名称</param>
+        /// <param name="projecttitle">待办任务标题</param>
+        private void InsertDtToK3Table(string sourceid,string userid,string username,string createname,string projecttitle)
         {
-            //定义用户名称
-            var username = "";
-
-            //todo:根据userid获取到对应的username
-            var userdt = searchDt.SearchUserRecord(userid).Copy();
-            username = userdt.Rows.Count == 0 ? "" : Convert.ToString(userdt.Rows[0][0]);
-
             //todo:整合相关数据至insertdt临时表(插入前准备)
             var insertdt = tempdt.InsertDtTemp();
 
